@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"log"
 )
 
 // 初始化数据库连接
@@ -22,36 +21,35 @@ func init() {
 }
 
 type User struct {
-	Name       string     `gorm:"index"`
-	CreditCard CreditCard `gorm:"foreignKey:UserName;references:name"`
 	gorm.Model
+	Creditcards []Creditcards
 }
 
-type CreditCard struct {
-	UserName string
-	Number   string
+type Creditcards struct {
 	gorm.Model
+	Number string
+	UserID uint
 }
 
 func main() {
-	//需要先创建users表，再创建cresdicard表
-	err := db.AutoMigrate(&User{}, &CreditCard{})
-	if err != nil {
-		log.Fatalf("表迁移失败: %v", err)
-		return
+	//自动迁移，建表
+	db.AutoMigrate(&User{}, &Creditcards{})
+
+	c1 := Creditcards{
+		Number: "123456",
+	}
+	c2 := Creditcards{
+		Number: "654321",
 	}
 
-	//创建记录
-	c := CreditCard{
-		Number: "1234565",
-	}
 	u := User{
-		CreditCard: c,
+		Creditcards: []Creditcards{c1, c2},
 	}
+
 	db.Create(&u)
 
-	//查询记录
-	var us User
-	db.Model(&User{}).Preload("CreditCard").First(&us)
-	fmt.Println(us)
+	var user User
+	db.Model(&User{}).Preload("Creditcards").Find(&user)
+	fmt.Println(user)
+
 }
